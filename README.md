@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/badge/pypi-QuickLab--MCP-blue.svg)](https://pypi.org/project/QuickLab-MCP/)
 [![MCP Protocol](https://img.shields.io/badge/MCP%20Protocol-2026--07--28-orange.svg)](https://modelcontextprotocol.io/)
 [![FastMCP](https://img.shields.io/badge/FastMCP-4.0.5%20GA-green.svg)](https://github.com/jlowin/fastmcp)
-[![Tests](https://img.shields.io/badge/tests-104%20passed%20%7C%20100%25-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-108%20passed%20%7C%20100%25-brightgreen.svg)]()
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-black.svg)](https://github.com/astral-sh/ruff)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Security](https://img.shields.io/badge/security-OAuth%202.1%20%2F%20OIDC-purple.svg)]()
@@ -24,7 +24,7 @@
 - **OAuth 2.1 & Multi-Tenant Security**: Tenant boundary enforcement, RBAC matrix (`Viewer`, `Researcher`, `Operator`, `Admin`), token scope attenuation, and anti-enumeration protections (HTTP 404 instead of 403 on cross-tenant probes).
 - **Transactional Outbox Architecture**: Guarantees zero lost experiment submissions using PostgreSQL transactional Outbox events dispatched to Redis queues.
 - **S3 / MinIO Object Storage**: Immutable tenant-isolated artifact storage with SHA-256 integrity verification, presigned download URLs, and offline memory fallback.
-- **Full Test Coverage**: **104 tests passing (100% green)** across unit, integration, security matrix, MCP contract, and full end-to-end experiment lifecycle.
+- **Full Test Coverage**: **108 tests passing (100% green)** across unit, integration, security matrix, MCP contract, zero-config fallbacks, and full end-to-end experiment lifecycle.
 
 ---
 

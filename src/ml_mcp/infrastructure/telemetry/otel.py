@@ -9,6 +9,8 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+from ml_mcp import __version__
+
 logger = logging.getLogger(__name__)
 
 
@@ -117,25 +119,25 @@ def init_telemetry(
         trace.set_tracer_provider(TracerProvider(resource=resource))
         metrics.set_meter_provider(MeterProvider(resource=resource))
 
-    meter = metrics.get_meter("ml-mcp", "0.1.0")
+    meter = metrics.get_meter("ml-mcp", __version__)
     _instruments = MetricInstruments(meter)
     return _instruments
 
 
 def get_tracer(name: str = "ml-mcp") -> trace.Tracer:
     """Return an OpenTelemetry Tracer instance."""
-    return trace.get_tracer(name, "0.1.0")
+    return trace.get_tracer(name, __version__)
 
 
 def get_meter(name: str = "ml-mcp") -> metrics.Meter:
     """Return an OpenTelemetry Meter instance."""
-    return metrics.get_meter(name, "0.1.0")
+    return metrics.get_meter(name, __version__)
 
 
 def get_instruments() -> MetricInstruments:
     """Return instantiated metric counters and histograms."""
     global _instruments
     if _instruments is None:
-        meter = metrics.get_meter("ml-mcp", "0.1.0")
+        meter = metrics.get_meter("ml-mcp", __version__)
         _instruments = MetricInstruments(meter)
     return _instruments

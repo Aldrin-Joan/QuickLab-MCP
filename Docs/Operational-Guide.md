@@ -94,17 +94,17 @@ All settings are managed via Pydantic Settings with typed environment variable o
 
 | Variable | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `DATABASE_URL` | `string` | `postgresql+asyncpg://...` | PostgreSQL async connection URI |
-| `DATABASE_POOL_SIZE` | `integer` | `10` | SQLAlchemy connection pool size |
-| `DATABASE_MAX_OVERFLOW` | `integer` | `20` | Max overflow pool connections |
-| `REDIS_URL` | `string` | `redis://localhost:6379/0` | Redis connection URI |
+| `DATABASE_URL` | `string` | `sqlite+aiosqlite:///~/.quicklab/quicklab.db` | PostgreSQL async URI or embedded SQLite fallback if omitted |
+| `DATABASE_POOL_SIZE` | `integer` | `10` | SQLAlchemy connection pool size (PostgreSQL) |
+| `DATABASE_MAX_OVERFLOW` | `integer` | `20` | Max overflow pool connections (PostgreSQL) |
+| `REDIS_URL` | `string` | `redis://localhost:6379/0` | Redis connection URI (falls back to in-memory queue if unavailable) |
 | `REDIS_MAX_CONNECTIONS` | `integer` | `50` | Redis client connection pool ceiling |
 
-### 2.4 Object Storage (S3 / MinIO)
+### 2.4 Object Storage (S3 / MinIO / Local Disk)
 
 | Variable | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `OBJECT_STORE_ENDPOINT_URL` | `string` | `http://localhost:9000` | S3 API endpoint URL (or MinIO) |
+| `OBJECT_STORE_ENDPOINT_URL` | `string` | `None` (Local Disk) | S3 API endpoint URL (or MinIO). If omitted, falls back to `~/.quicklab/artifacts` |
 | `OBJECT_STORE_BUCKET_NAME` | `string` | `modellab-artifacts` | Destination S3 bucket |
 | `OBJECT_STORE_REGION` | `string` | `us-east-1` | AWS S3 region |
 | `OBJECT_STORE_PRESIGNED_TTL` | `integer` | `900` | Presigned URL lifetime (seconds) |
@@ -122,14 +122,19 @@ conda activate ML_LLM
 ### 3.2 Running the Full Automated Verification Suite
 
 ```powershell
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
-All 75 tests (unit, integration, security matrix, contract, and full e2e) run and pass in under 3 minutes.
+All 108 tests (unit, integration, security matrix, contract, zero-config fallbacks, and full e2e) run and pass.
 
-### 3.3 Running Database Migrations
+### 3.3 Zero-Configuration Mode vs. Production PostgreSQL
 
-QuickLab uses Alembic to manage database schema migrations.
+QuickLab v0.2.0 introduces **Zero-Configuration Mode**:
+- If `DATABASE_URL` is omitted or empty, QuickLab defaults to an embedded SQLite database (`sqlite+aiosqlite:///~/.quicklab/quicklab.db`) and **automatically creates all 14 database tables** on startup. No manual migration or database container is required.
+- If `OBJECT_STORE_ENDPOINT_URL` is omitted, artifacts are saved to local filesystem storage (`~/.quicklab/artifacts/`).
+- If `REDIS_URL` is omitted or Redis is down, an in-process memory queue processes experiment tasks automatically.
+
+When deploying with an external PostgreSQL instance (Production Mode), run Alembic migrations:
 
 #### Option A: Local Python / UV (Source Checkout)
 ```powershell

@@ -40,7 +40,7 @@ class McpSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="MCP_", extra="ignore")
 
     server_name: str = "ModelLab-ML-MCP"
-    server_version: str = "0.1.0"
+    server_version: str = "0.2.0"
     protocol_version: str = "2026-07-28"
     host: str = "127.0.0.1"
     port: int = 8000
