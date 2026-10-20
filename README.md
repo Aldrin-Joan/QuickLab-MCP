@@ -1,6 +1,7 @@
-# ModelLab
+# QuickLab MCP
 
 [![Python Version](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI](https://img.shields.io/badge/pypi-QuickLab--MCP-blue.svg)](https://pypi.org/project/QuickLab-MCP/)
 [![MCP Protocol](https://img.shields.io/badge/MCP%20Protocol-2026--07--28-orange.svg)](https://modelcontextprotocol.io/)
 [![FastMCP](https://img.shields.io/badge/FastMCP-4.0.5%20GA-green.svg)](https://github.com/jlowin/fastmcp)
 [![Tests](https://img.shields.io/badge/tests-104%20passed%20%7C%20100%25-brightgreen.svg)]()
@@ -8,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Security](https://img.shields.io/badge/security-OAuth%202.1%20%2F%20OIDC-purple.svg)]()
 
-**ModelLab** is an enterprise-grade Machine Learning Experimentation Control Plane exposed via the **Model Context Protocol (MCP)**. Engineered with FastMCP 4 and conforming to the standard MCP baseline (`2026-07-28`), ModelLab enables autonomous AI agents and human data scientists to discover approved architectures, validate tabular datasets, submit reproducible training experiments, inspect predictions/metrics, and perform deep diagnostic analysis—**with zero arbitrary code execution**.
+**QuickLab MCP** (formerly ModelLab) is an enterprise-grade Machine Learning Experimentation Control Plane exposed via the **Model Context Protocol (MCP)**. Engineered with FastMCP 4 and conforming to the standard MCP baseline (`2026-07-28`), QuickLab enables autonomous AI agents and human data scientists to discover approved architectures, validate tabular datasets, submit reproducible training experiments, inspect predictions/metrics, and perform deep diagnostic analysis—**with zero arbitrary code execution**.
 
 ---
 
@@ -180,16 +181,20 @@ ModelLab exposes 23 granular tools across 6 functional categories:
 
 ### 1. Installation
 
+#### Instant Execution via `uvx` (Recommended)
+No cloning required — run QuickLab directly with Astral `uv`:
+```bash
+uvx quicklab-mcp
+```
+
+#### Local Development Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/ModelLab.git
-cd ModelLab
+git clone https://github.com/Aldrin-Joan/QuickLab-MCP.git
+cd QuickLab-MCP
 
-# Activate Conda environment
-conda activate ML_LLM
-
-# Install ModelLab in editable mode with development dependencies
-pip install -e ".[dev]"
+# Install dependencies using uv
+uv sync
 ```
 
 ### 2. Run the Full Test Suite
@@ -312,17 +317,38 @@ Connects to the ModelLab API service running inside Docker Compose (`docker comp
 
 ---
 
-### 3. UV + STDIO
-Runs ModelLab locally using Astral `uv` without requiring a container for the server process (connecting to local or Dockerized PostgreSQL, Redis, and MinIO services).
+### 3. UVX + STDIO (Recommended Turnkey Setup)
+Runs QuickLab globally via `uvx` directly from PyPI:
 
 ```json
 {
   "mcpServers": {
-    "modellab": {
+    "quicklab": {
+      "command": "uvx",
+      "args": ["quicklab-mcp"],
+      "env": {
+        "APP_ENV": "production",
+        "DATABASE_URL": "postgresql+asyncpg://postgres:postgres@localhost:5433/modellab",
+        "REDIS_URL": "redis://localhost:6379/0",
+        "OBJECT_STORE_ENDPOINT_URL": "http://localhost:9000",
+        "OBJECT_STORE_ACCESS_KEY_ID": "minioadmin",
+        "OBJECT_STORE_SECRET_ACCESS_KEY": "minioadmin",
+        "OBJECT_STORE_BUCKET_NAME": "modellab-artifacts"
+      }
+    }
+  }
+}
+```
+
+Or for local source development with `uv`:
+```json
+{
+  "mcpServers": {
+    "quicklab": {
       "command": "uv",
       "args": [
         "run",
-        "--directory", "/absolute/path/to/ModelLab",
+        "--directory", "/absolute/path/to/QuickLab-MCP",
         "python", "-m", "ml_mcp.server.stdio"
       ],
       "env": {

@@ -3,14 +3,14 @@ requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ml-mcp"
+name = "QuickLab-MCP"
 version = "0.1.0"
-description = "Agentic ML MCP Server - Production Control Plane for Machine Learning Experimentation"
+description = "QuickLab MCP Server - Production Tabular ML Experimentation Control Plane for AI Agents"
 readme = "README.md"
 requires-python = ">=3.13"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [
-    { name = "ModelLab Team" }
+    { name = "QuickLab Team" }
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -47,6 +47,17 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-grpc>=1.24.0",
     "uvicorn>=0.30.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Aldrin-Joan/QuickLab-MCP"
+Repository = "https://github.com/Aldrin-Joan/QuickLab-MCP.git"
+Issues = "https://github.com/Aldrin-Joan/QuickLab-MCP/issues"
+Documentation = "https://github.com/Aldrin-Joan/QuickLab-MCP#readme"
+
+[project.scripts]
+quicklab = "ml_mcp.server.stdio:run_stdio"
+quicklab-mcp = "ml_mcp.server.stdio:run_stdio"
+modellab = "ml_mcp.server.stdio:run_stdio"
 
 [project.optional-dependencies]
 dev = [

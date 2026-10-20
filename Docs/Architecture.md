@@ -1,6 +1,6 @@
 # Architecture.md
 
-# Agentic ML MCP Server --- Production Architecture
+# QuickLab MCP --- Production Architecture (formerly ModelLab)
 
 **Status:** Production architecture baseline\
 **Protocol baseline:** MCP `2026-07-28`\
