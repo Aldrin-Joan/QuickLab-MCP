@@ -27,6 +27,22 @@ def test_default_database_url_generation(tmp_path: Path, monkeypatch: pytest.Mon
     assert tmp_path.exists()
 
 
+def test_empty_string_env_variables_fallback(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Verify that empty string DATABASE_URL and OBJECT_STORE_ENDPOINT_URL fall back cleanly."""
+    monkeypatch.setenv("QUICKLAB_HOME", str(tmp_path))
+    monkeypatch.setenv("DATABASE_URL", "  ")
+    monkeypatch.setenv("OBJECT_STORE_ENDPOINT_URL", "")
+
+    settings = Settings()
+    assert settings.database.url.startswith("sqlite+aiosqlite:///")
+    assert "quicklab.db" in settings.database.url
+
+    storage = S3StorageService(settings)
+    assert not storage.has_remote_s3
+
+
 def test_local_storage_fallback_read_write(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that S3StorageService writes and reads from local filesystem when S3 is unconfigured."""
     monkeypatch.setenv("QUICKLAB_HOME", str(tmp_path))

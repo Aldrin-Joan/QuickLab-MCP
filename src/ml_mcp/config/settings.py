@@ -78,12 +78,15 @@ class DatabaseSettings(BaseSettings):
 
     @field_validator("url", mode="after")
     @classmethod
-    def ensure_async_driver(cls, v: str) -> str:
-        if v.startswith("postgresql://"):
-            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
-        if v.startswith("sqlite://") and not v.startswith("sqlite+aiosqlite://"):
-            return v.replace("sqlite://", "sqlite+aiosqlite://", 1)
-        return v
+    def ensure_async_driver(cls, v: str | None) -> str:
+        if not v or not str(v).strip():
+            return get_default_database_url()
+        v_str = str(v)
+        if v_str.startswith("postgresql://"):
+            return v_str.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if v_str.startswith("sqlite://") and not v_str.startswith("sqlite+aiosqlite://"):
+            return v_str.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        return v_str
 
 
 class RedisSettings(BaseSettings):

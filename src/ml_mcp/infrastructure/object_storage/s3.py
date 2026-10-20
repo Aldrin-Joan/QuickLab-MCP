@@ -65,7 +65,8 @@ class S3StorageService:
 
     @property
     def has_remote_s3(self) -> bool:
-        return bool(self.settings.object_store.endpoint_url)
+        url = self.settings.object_store.endpoint_url
+        return bool(url and str(url).strip())
 
     @property
     def client(self) -> Any:
