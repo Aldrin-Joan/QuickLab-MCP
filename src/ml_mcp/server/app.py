@@ -96,7 +96,9 @@ async def _execute_secured[T](
                     raise ResourceNotFoundError("Model", "specified in request") from None
                 raise ResourceNotFoundError("Referenced resource", "specified in request") from None
             if "unique constraint" in orig_msg:
-                raise InvalidInputError("A resource with this name or identifier already exists.") from None
+                raise InvalidInputError(
+                    "A resource with this name or identifier already exists."
+                ) from None
             raise InvalidInputError("Database constraint violation.") from None
         if isinstance(exc, DBAPIError):
             raise InvalidInputError("Database operation failed due to invalid input.") from None
@@ -115,7 +117,15 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[None]:
         from ml_mcp.config import get_settings
         from ml_mcp.infrastructure.postgres.session import get_db_manager
 
-        async with get_db_manager().session() as sess:
+        db_mgr = get_db_manager()
+        # Auto-create schema for embedded SQLite if tables do not exist
+        if db_mgr.settings.database.url.startswith("sqlite"):
+            from ml_mcp.infrastructure.postgres.base import Base
+
+            async with db_mgr.engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+
+        async with db_mgr.session() as sess:
             service = ModelService(sess)
             await service.seed_catalog()
             proj_service = ProjectService(sess)

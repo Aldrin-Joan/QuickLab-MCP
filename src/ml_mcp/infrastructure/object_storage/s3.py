@@ -1,9 +1,11 @@
 """S3-compatible object storage service with tenant isolation and presigned URL support."""
 
+import contextlib
 import hashlib
 import logging
 import os
 import re
+from pathlib import Path
 from typing import Any
 
 import boto3
@@ -26,6 +28,8 @@ class S3StorageService:
         self.bucket_name = self.settings.object_store.bucket_name
         self._client: Any = None
         self._memory_store: dict[str, tuple[bytes, dict[str, str], str]] = {}
+        quicklab_dir = Path(os.environ.get("QUICKLAB_HOME", Path.home() / ".quicklab"))
+        self._local_storage_dir = quicklab_dir / "artifacts"
 
     @classmethod
     def _assert_safe_component(cls, component: str, field_name: str = "component") -> str:
@@ -60,7 +64,13 @@ class S3StorageService:
         return app_env == "testing" or os.environ.get("APP_ENV") == "testing"
 
     @property
+    def has_remote_s3(self) -> bool:
+        return bool(self.settings.object_store.endpoint_url)
+
+    @property
     def client(self) -> Any:
+        if not self.has_remote_s3:
+            return None
         if self._client is None:
             self._client = boto3.client(
                 "s3",
@@ -113,6 +123,26 @@ class S3StorageService:
         cls._assert_safe_component(filename, "filename")
         return f"tenants/{tenant_id}/models/{model_id}/{version}/{filename}"
 
+    def _write_local(
+        self,
+        key: str,
+        data: bytes,
+        metadata: dict[str, str] | None = None,
+        content_type: str = "application/octet-stream",
+    ) -> tuple[str, str]:
+        content_hash = self.compute_sha256(data)
+        meta = metadata or {}
+        meta["content_hash"] = content_hash
+        self._memory_store[key] = (data, meta, content_type)
+        try:
+            target_path = self._local_storage_dir / key
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.write_bytes(data)
+        except Exception as exc:
+            logger.debug("Local disk fallback write warning: %s", exc)
+        storage_uri = f"s3://{self.bucket_name}/{key}"
+        return storage_uri, content_hash
+
     def put_object(
         self,
         key: str,
@@ -122,21 +152,14 @@ class S3StorageService:
     ) -> tuple[str, str]:
         """Upload an immutable object. Returns (storage_uri, sha256_digest)."""
         self._assert_safe_key(key)
-        content_hash = self.compute_sha256(data)
-        meta = metadata or {}
-        meta["content_hash"] = content_hash
 
-        if self.is_testing and self._client is None:
-            self._memory_store[key] = (data, meta, content_type)
-            storage_uri = f"s3://{self.bucket_name}/{key}"
-            logger.info(
-                "Testing environment: stored S3 object in memory: %s (size: %d bytes)",
-                storage_uri,
-                len(data),
-            )
-            return storage_uri, content_hash
+        if not self.has_remote_s3 or (self.is_testing and self._client is None):
+            return self._write_local(key, data, metadata, content_type)
 
         try:
+            content_hash = self.compute_sha256(data)
+            meta = metadata or {}
+            meta["content_hash"] = content_hash
             self.client.put_object(
                 Bucket=self.bucket_name,
                 Key=key,
@@ -148,22 +171,21 @@ class S3StorageService:
             logger.info("Successfully wrote S3 object: %s (size: %d bytes)", storage_uri, len(data))
             return storage_uri, content_hash
         except Exception as exc:
-            if not self.is_testing:
-                raise DependencyUnavailableError("Object Storage") from exc
             logger.warning(
-                "Live S3 unavailable (%s), writing object to memory fallback for key '%s'", exc, key
+                "Remote S3 unavailable (%s), writing object to local storage for key '%s'", exc, key
             )
-            self._memory_store[key] = (data, meta, content_type)
-            storage_uri = f"s3://{self.bucket_name}/{key}"
-            return storage_uri, content_hash
+            return self._write_local(key, data, metadata, content_type)
 
     def get_object(self, key: str) -> bytes:
         """Retrieve binary content of an object."""
         self._assert_safe_key(key)
         if key in self._memory_store:
             return self._memory_store[key][0]
-        if self.is_testing and self._client is None:
-            logger.error("Failed to read object from S3 memory store at key '%s'", key)
+        local_path = self._local_storage_dir / key
+        if local_path.is_file():
+            return local_path.read_bytes()
+        if not self.has_remote_s3 or (self.is_testing and self._client is None):
+            logger.error("Failed to read object from storage at key '%s'", key)
             raise DependencyUnavailableError("Object Storage")
         try:
             response = self.client.get_object(Bucket=self.bucket_name, Key=key)
@@ -171,6 +193,8 @@ class S3StorageService:
         except Exception as exc:
             if key in self._memory_store:
                 return self._memory_store[key][0]
+            if local_path.is_file():
+                return local_path.read_bytes()
             logger.error("Failed to read object from S3 at key '%s': %s", key, exc)
             raise DependencyUnavailableError("Object Storage") from exc
 
@@ -185,7 +209,16 @@ class S3StorageService:
                 "metadata": meta,
                 "last_modified": None,
             }
-        if self.is_testing and self._client is None:
+        local_path = self._local_storage_dir / key
+        if local_path.is_file():
+            stat = local_path.stat()
+            return {
+                "size_bytes": stat.st_size,
+                "content_type": "application/octet-stream",
+                "metadata": {},
+                "last_modified": stat.st_mtime,
+            }
+        if not self.has_remote_s3 or (self.is_testing and self._client is None):
             return None
         try:
             response = self.client.head_object(Bucket=self.bucket_name, Key=key)
@@ -199,22 +232,18 @@ class S3StorageService:
             if exc.response["Error"]["Code"] in ("404", "NoSuchKey"):
                 return None
             raise DependencyUnavailableError("Object Storage") from exc
-        except Exception as exc:
-            if key in self._memory_store:
-                data, meta, c_type = self._memory_store[key]
-                return {
-                    "size_bytes": len(data),
-                    "content_type": c_type,
-                    "metadata": meta,
-                    "last_modified": None,
-                }
-            raise DependencyUnavailableError("Object Storage") from exc
+        except Exception:
+            return None
 
     def delete_object(self, key: str) -> bool:
         """Delete an object."""
         self._assert_safe_key(key)
         self._memory_store.pop(key, None)
-        if self.is_testing and self._client is None:
+        local_path = self._local_storage_dir / key
+        if local_path.is_file():
+            with contextlib.suppress(Exception):
+                local_path.unlink()
+        if not self.has_remote_s3 or (self.is_testing and self._client is None):
             return True
         try:
             self.client.delete_object(Bucket=self.bucket_name, Key=key)
@@ -224,10 +253,13 @@ class S3StorageService:
             return True
 
     def generate_presigned_get_url(self, key: str, expires_in: int | None = None) -> str:
-        """Generate a short-lived read-only presigned GET URL."""
+        """Generate a short-lived read-only presigned GET URL or local file URI."""
         self._assert_safe_key(key)
         ttl = expires_in or self.settings.object_store.presigned_ttl_seconds
-        if self.is_testing and self._client is None:
+        local_path = self._local_storage_dir / key
+        if local_path.is_file():
+            return local_path.as_uri()
+        if not self.has_remote_s3 or (self.is_testing and self._client is None):
             return f"https://s3.local/{self.bucket_name}/{key}?expires={ttl}&sig=mock"
         try:
             url = self.client.generate_presigned_url(
@@ -237,6 +269,8 @@ class S3StorageService:
             )
             return url
         except Exception:
+            if local_path.is_file():
+                return local_path.as_uri()
             return f"https://s3.local/{self.bucket_name}/{key}?expires={ttl}&sig=mock"
 
     def generate_presigned_put_url(

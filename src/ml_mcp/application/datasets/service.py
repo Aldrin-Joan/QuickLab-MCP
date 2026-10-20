@@ -129,7 +129,9 @@ class DatasetService:
             ],
         }
 
-    async def list_datasets(self, tenant_id: str, project_id: str | None = None) -> list[dict[str, Any]]:
+    async def list_datasets(
+        self, tenant_id: str, project_id: str | None = None
+    ) -> list[dict[str, Any]]:
         datasets = await self.repo.list_datasets(tenant_id, project_id)
         return [
             {

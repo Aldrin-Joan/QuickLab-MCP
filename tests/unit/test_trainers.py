@@ -98,11 +98,13 @@ def test_catboost_trainer_categorical_and_no_disk_files(tmp_path, monkeypatch):
     # Change working dir to empty tmp_path to verify no catboost_info is created
     monkeypatch.chdir(tmp_path)
 
-    df = pd.DataFrame({
-        "num_1": [1.0, 2.5, 3.2, 4.8, 5.1, 6.0, 7.3, 8.9] * 10,
-        "cat_feat": ["A", "B", "C", "A", "B", "C", "A", "B"] * 10,
-        "target": [0, 1, 0, 1, 0, 1, 0, 1] * 10,
-    })
+    df = pd.DataFrame(
+        {
+            "num_1": [1.0, 2.5, 3.2, 4.8, 5.1, 6.0, 7.3, 8.9] * 10,
+            "cat_feat": ["A", "B", "C", "A", "B", "C", "A", "B"] * 10,
+            "target": [0, 1, 0, 1, 0, 1, 0, 1] * 10,
+        }
+    )
 
     pipeline = PreprocessingPipeline(
         target_column="target",
@@ -126,4 +128,3 @@ def test_catboost_trainer_categorical_and_no_disk_files(tmp_path, monkeypatch):
     # Verify no catboost_info directory was created anywhere in tmp_path
     assert not os.path.exists(tmp_path / "catboost_info")
     assert not os.path.exists("catboost_info")
-

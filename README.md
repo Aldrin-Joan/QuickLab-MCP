@@ -347,7 +347,24 @@ Connects to the ModelLab API service running inside Docker Compose (`docker comp
 ---
 
 ### 3. UVX + STDIO (Recommended Turnkey Setup)
-Runs QuickLab globally via `uvx` directly from PyPI:
+Runs QuickLab globally via `uvx` directly from PyPI.
+
+#### Zero-Configuration Mode (Zero Dependencies Required)
+If you don't have PostgreSQL or Docker installed, QuickLab automatically provisions an embedded SQLite database (`~/.quicklab/quicklab.db`), local filesystem artifact storage (`~/.quicklab/artifacts`), and an in-process queue:
+
+```json
+{
+  "mcpServers": {
+    "quicklab": {
+      "command": "uvx",
+      "args": ["quicklab-mcp"]
+    }
+  }
+}
+```
+
+#### Production Mode (Connecting to PostgreSQL & MinIO / S3)
+To connect QuickLab to your own PostgreSQL and S3-compatible storage:
 
 ```json
 {

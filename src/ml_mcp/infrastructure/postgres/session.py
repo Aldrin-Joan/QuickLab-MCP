@@ -40,7 +40,7 @@ class DatabaseManager:
             from sqlalchemy.pool import StaticPool
 
             engine_kwargs["poolclass"] = StaticPool
-            engine_kwargs["connect_args"] = {"check_same_thread": False}
+            engine_kwargs["connect_args"] = {"check_same_thread": False, "timeout": 30.0}
         else:
             engine_kwargs.update(
                 {

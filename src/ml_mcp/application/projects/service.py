@@ -79,9 +79,7 @@ class ProjectService:
             for p in projects
         ]
 
-    async def ensure_default_project(
-        self, tenant_id: str = "default-tenant"
-    ) -> dict[str, Any]:
+    async def ensure_default_project(self, tenant_id: str = "default-tenant") -> dict[str, Any]:
         """Ensure the tenant and default-project exist, returning its details."""
         default_proj = await self.repo.get_or_create_default_project(tenant_id)
         return {

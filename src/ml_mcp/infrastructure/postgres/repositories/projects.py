@@ -46,9 +46,7 @@ class ProjectRepository:
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_or_create_default_project(
-        self, tenant_id: str = "default-tenant"
-    ) -> ProjectOrm:
+    async def get_or_create_default_project(self, tenant_id: str = "default-tenant") -> ProjectOrm:
         """Ensure tenant and default project exist, returning the project."""
         # 1. Ensure tenant exists
         tenant_stmt = select(TenantOrm).where(TenantOrm.id == tenant_id)
@@ -63,7 +61,9 @@ class ProjectRepository:
             await self.session.flush()
 
         # 2. Ensure default-project exists
-        proj_id = "default-project" if tenant_id == "default-tenant" else f"{tenant_id}-default-project"
+        proj_id = (
+            "default-project" if tenant_id == "default-tenant" else f"{tenant_id}-default-project"
+        )
         proj_stmt = select(ProjectOrm).where(
             ProjectOrm.tenant_id == tenant_id,
             (ProjectOrm.id == proj_id) | (ProjectOrm.name == "Default Project"),

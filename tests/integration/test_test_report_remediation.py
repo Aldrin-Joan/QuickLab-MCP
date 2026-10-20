@@ -254,9 +254,7 @@ async def test_all_downstream_tools_unblocked(test_server):
     assert versions[0]["version"] == "1.0"
 
     # Tool 2: create_experiment
-    mv_res = await test_server.call_tool(
-        "list_model_versions", {"model_id": "logistic_regression"}
-    )
+    mv_res = await test_server.call_tool("list_model_versions", {"model_id": "logistic_regression"})
     model_version_id = extract_result(mv_res)[0]["version_id"]
 
     exp_res = await test_server.call_tool(

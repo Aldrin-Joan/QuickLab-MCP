@@ -1,15 +1,23 @@
 """Centralized production configuration using Pydantic Settings."""
 
+import os
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Load local .env to prioritize ModelLab local services over host environment variables
-load_dotenv(override=True)
+# Load local .env if present (explicit environment variables take precedence)
+load_dotenv(override=False)
 
+
+def get_default_database_url() -> str:
+    """Return embedded SQLite database URL in user home directory when no DB URL is configured."""
+    quicklab_dir = Path(os.environ.get("QUICKLAB_HOME", Path.home() / ".quicklab"))
+    quicklab_dir.mkdir(parents=True, exist_ok=True)
+    return f"sqlite+aiosqlite:///{(quicklab_dir / 'quicklab.db').as_posix()}"
 
 
 class AppSettings(BaseSettings):
@@ -57,11 +65,11 @@ class AuthSettings(BaseSettings):
 
 
 class DatabaseSettings(BaseSettings):
-    """PostgreSQL database configuration."""
+    """PostgreSQL or embedded SQLite database configuration."""
 
     model_config = SettingsConfigDict(env_prefix="DATABASE_", extra="ignore")
 
-    url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/modellab"
+    url: str = Field(default_factory=get_default_database_url)
     pool_size: int = 10
     max_overflow: int = 20
     pool_timeout: float = 30.0
@@ -70,11 +78,12 @@ class DatabaseSettings(BaseSettings):
 
     @field_validator("url", mode="after")
     @classmethod
-    def ensure_asyncpg_driver(cls, v: str) -> str:
+    def ensure_async_driver(cls, v: str) -> str:
         if v.startswith("postgresql://"):
             return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if v.startswith("sqlite://") and not v.startswith("sqlite+aiosqlite://"):
+            return v.replace("sqlite://", "sqlite+aiosqlite://", 1)
         return v
-
 
 
 class RedisSettings(BaseSettings):
@@ -93,7 +102,7 @@ class ObjectStoreSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="OBJECT_STORE_", extra="ignore")
 
-    endpoint_url: str | None = "http://localhost:9000"
+    endpoint_url: str | None = None
     access_key_id: SecretStr = Field(default=SecretStr("minioadmin"))
     secret_access_key: SecretStr = Field(default=SecretStr("minioadmin"))
     bucket_name: str = "modellab-artifacts"

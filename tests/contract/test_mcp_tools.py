@@ -172,7 +172,9 @@ async def test_dataset_lifecycle_tools():
 
     # 1b. validate_dataset with malformed base64
     with pytest.raises(ToolError):
-        await server.call_tool("validate_dataset", {"format": "csv", "data_base64": "not-valid-base64!!!"})
+        await server.call_tool(
+            "validate_dataset", {"format": "csv", "data_base64": "not-valid-base64!!!"}
+        )
 
     # Create project first
     proj_res = await server.call_tool("create_project", {"name": "Churn Project"})
@@ -390,7 +392,6 @@ async def test_get_experiment_failure_details():
     assert exp_data["status"] == "FAILED"
     assert "Target column 'missing' not found" in exp_data["error_message"]
     assert exp_data["error_type"] == "TargetColumnNotFoundError"
-
 
 
 @pytest.mark.asyncio

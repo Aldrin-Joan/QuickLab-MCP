@@ -57,7 +57,9 @@ class ModelService:
             else:
                 existing_version.container_image_digest = meta.container_image_digest
                 existing_version.supported_task_types = [t.value for t in meta.supported_task_types]
-                existing_version.hyperparameters_schema = [h.model_dump() for h in meta.supported_hyperparameters]
+                existing_version.hyperparameters_schema = [
+                    h.model_dump() for h in meta.supported_hyperparameters
+                ]
                 existing_version.approval_status = meta.approval_status.value
 
     async def list_models(self) -> list[dict[str, Any]]:
@@ -69,7 +71,11 @@ class ModelService:
                 "description": m.description,
                 "family": m.family,
                 "publisher": m.publisher,
-                "versions": [v.version for v in m.versions if v.approval_status == ApprovalStatus.APPROVED.value],
+                "versions": [
+                    v.version
+                    for v in m.versions
+                    if v.approval_status == ApprovalStatus.APPROVED.value
+                ],
             }
             for m in models
         ]
@@ -125,7 +131,9 @@ class ModelService:
     ) -> ModelVersionOrm:
         """Verify model approval, task compatibility, and hyperparameter bounds."""
         resolved_task_type = task_type or kwargs.get("task_type")
-        resolved_hypers = hyperparameters if hyperparameters is not None else kwargs.get("hyperparameters", {})
+        resolved_hypers = (
+            hyperparameters if hyperparameters is not None else kwargs.get("hyperparameters", {})
+        )
         resolved_model_id = model_id or kwargs.get("model_id")
         resolved_version = version or kwargs.get("version")
         resolved_mv_id = model_version_id or kwargs.get("model_version_id")
@@ -135,10 +143,14 @@ class ModelService:
         elif resolved_model_id and resolved_version:
             v = await self.repo.get_version(resolved_model_id, resolved_version)
         else:
-            raise ResourceNotFoundError("ModelVersion", resolved_mv_id or f"{resolved_model_id}:{resolved_version}")
+            raise ResourceNotFoundError(
+                "ModelVersion", resolved_mv_id or f"{resolved_model_id}:{resolved_version}"
+            )
 
         if not v:
-            raise ResourceNotFoundError("ModelVersion", resolved_mv_id or f"{resolved_model_id}:{resolved_version}")
+            raise ResourceNotFoundError(
+                "ModelVersion", resolved_mv_id or f"{resolved_model_id}:{resolved_version}"
+            )
 
         mid = resolved_model_id or v.model_id
         ver = resolved_version or v.version

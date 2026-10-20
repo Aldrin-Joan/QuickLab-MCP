@@ -61,7 +61,9 @@ class DatasetValidator:
                 try:
                     text_content = raw_bytes.decode("utf-8")
                 except UnicodeDecodeError as exc:
-                    raise DatasetValidationError(f"Malformed encoding: dataset must be valid UTF-8: {exc}") from exc
+                    raise DatasetValidationError(
+                        f"Malformed encoding: dataset must be valid UTF-8: {exc}"
+                    ) from exc
 
                 reader = csv.reader(io.StringIO(text_content))
                 try:
@@ -89,7 +91,9 @@ class DatasetValidator:
             elif fmt == DatasetFormat.JSONL.value:
                 df = pd.read_json(bio, lines=True)
             else:
-                raise DatasetValidationError(f"Unsupported dataset format '{data_format}'. Allowed: csv, parquet, jsonl")
+                raise DatasetValidationError(
+                    f"Unsupported dataset format '{data_format}'. Allowed: csv, parquet, jsonl"
+                )
         except Exception as exc:
             raise DatasetValidationError(f"Failed to parse dataset as {fmt}: {exc}") from exc
 
@@ -148,7 +152,9 @@ class DatasetValidator:
         df.to_parquet(out_buf, index=False, engine="pyarrow", compression="snappy")
         return out_buf.getvalue()
 
-    def process(self, raw_bytes: bytes, data_format: DatasetFormat | str) -> tuple[pd.DataFrame, bytes, DatasetSchema]:
+    def process(
+        self, raw_bytes: bytes, data_format: DatasetFormat | str
+    ) -> tuple[pd.DataFrame, bytes, DatasetSchema]:
         """Validate, convert to canonical parquet, and extract complete schema."""
         df = self.parse_dataframe(raw_bytes, data_format)
         parquet_bytes = self.canonicalize_to_parquet(df)
