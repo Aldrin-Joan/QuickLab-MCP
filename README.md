@@ -283,7 +283,6 @@ Runs QuickLab inside an isolated Docker container with standard I/O (`sys.stdin`
 > ```json
 > "args": [
 >   "run", "-i", "--rm",
->   "--entrypoint", "python",
 >   "--network", "modellab_default",
 >   "-e", "DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/modellab",
 >   "-e", "REDIS_URL=redis://redis:6379/0",
@@ -295,19 +294,37 @@ Runs QuickLab inside an isolated Docker container with standard I/O (`sys.stdin`
 >   "-m", "ml_mcp.server.stdio"
 > ]
 > ```
->   "run", "-i", "--rm",
->   "--entrypoint", "python",
->   "--network", "modellab_default",
->   "-e", "DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/modellab",
->   "-e", "REDIS_URL=redis://redis:6379/0",
->   "-e", "OBJECT_STORE_ENDPOINT_URL=http://minio:9000",
->   "-e", "OBJECT_STORE_ACCESS_KEY_ID=minioadmin",
->   "-e", "OBJECT_STORE_SECRET_ACCESS_KEY=minioadmin",
->   "-e", "OBJECT_STORE_BUCKET_NAME=modellab-artifacts",
->   "modellab-api",
->   "-m", "ml_mcp.server.stdio"
-> ]
-> ```
+
+---
+
+### Database Schema Initialization & Migrations
+
+When pointing QuickLab to a new PostgreSQL instance (local, AWS RDS, Supabase, Neon, or GCP Cloud SQL), the schema must be initialized with Alembic migrations:
+
+#### Option A: Docker Compose (Fully Automated)
+If deploying via [`docker-compose.stdio.yml`](docker-compose.stdio.yml) or [`docker-compose.http.yml`](docker-compose.http.yml), migrations execute automatically prior to application launch via the `db-migrate` service:
+```bash
+docker compose -f docker-compose.stdio.yml up -d
+```
+
+#### Option B: Standalone Docker (External / Managed Database)
+Run migrations on a remote or standalone PostgreSQL instance without installing Python or cloning the repo:
+```bash
+docker run --rm \
+  -e DATABASE_URL="postgresql+asyncpg://<USER>:<PASSWORD>@<HOST>:<PORT>/<DB_NAME>" \
+  ghcr.io/aldrin-joan/quicklab-api:latest \
+  -m alembic upgrade head
+```
+
+#### Option C: Local Python / UV (Source Repository)
+If running from source:
+```bash
+uv run alembic upgrade head
+```
+
+> [!NOTE]
+> **Automatic Seed Data**: Once Alembic creates the schema, QuickLab's startup lifespan automatically seeds the 7 approved tabular ML models and ensures a default project workspace exists for the tenant.
+
 
 ---
 

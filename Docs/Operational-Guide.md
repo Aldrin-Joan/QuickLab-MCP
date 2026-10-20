@@ -129,9 +129,28 @@ All 75 tests (unit, integration, security matrix, contract, and full e2e) run an
 
 ### 3.3 Running Database Migrations
 
+QuickLab uses Alembic to manage database schema migrations.
+
+#### Option A: Local Python / UV (Source Checkout)
 ```powershell
-alembic upgrade head
+uv run alembic upgrade head
 ```
+
+#### Option B: Standalone Docker (External / Managed Database)
+To migrate a remote database (AWS RDS, Supabase, Neon, Cloud SQL) without needing Python installed locally:
+```powershell
+docker run --rm `
+  -e DATABASE_URL="postgresql+asyncpg://<USER>:<PASSWORD>@<HOST>:<PORT>/<DB_NAME>" `
+  ghcr.io/aldrin-joan/quicklab-api:latest `
+  -m alembic upgrade head
+```
+
+#### Option C: Docker Compose (Automated)
+When launching via `docker-compose.stdio.yml` or `docker-compose.http.yml`, migrations run automatically before services boot:
+```powershell
+docker compose -f docker-compose.stdio.yml up -d
+```
+
 
 ### 3.4 Launching the HTTP Server
 
