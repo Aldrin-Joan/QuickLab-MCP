@@ -5,6 +5,7 @@ Revises:
 Create Date: 2026-09-19 10:00:00.000000
 
 """
+
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -32,7 +33,12 @@ def upgrade() -> None:
     op.create_table(
         "principals",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("tenant_id", sa.String(36), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id",
+            sa.String(36),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("username", sa.String(128), nullable=False),
         sa.Column("email", sa.String(255), nullable=False),
         sa.Column("role", sa.String(32), nullable=False, default="viewer"),
@@ -46,7 +52,12 @@ def upgrade() -> None:
     op.create_table(
         "projects",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("tenant_id", sa.String(36), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "tenant_id",
+            sa.String(36),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("name", sa.String(128), nullable=False),
         sa.Column("description", sa.Text(), nullable=False, default=""),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
@@ -71,12 +82,19 @@ def upgrade() -> None:
     op.create_table(
         "model_versions",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("model_id", sa.String(64), sa.ForeignKey("models.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "model_id",
+            sa.String(64),
+            sa.ForeignKey("models.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("version", sa.String(32), nullable=False),
         sa.Column("container_image_digest", sa.String(128), nullable=False),
         sa.Column("artifact_digest", sa.String(128), nullable=True),
         sa.Column("supported_task_types", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("hyperparameters_schema", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            "hyperparameters_schema", postgresql.JSONB(astext_type=sa.Text()), nullable=False
+        ),
         sa.Column("approval_status", sa.String(32), nullable=False, default="APPROVED"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.UniqueConstraint("model_id", "version", name="uq_model_versions_model_version"),
@@ -88,7 +106,12 @@ def upgrade() -> None:
         "datasets",
         sa.Column("id", sa.String(36), primary_key=True),
         sa.Column("tenant_id", sa.String(36), nullable=False),
-        sa.Column("project_id", sa.String(36), sa.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "project_id",
+            sa.String(36),
+            sa.ForeignKey("projects.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("name", sa.String(128), nullable=False),
         sa.Column("description", sa.Text(), nullable=False, default=""),
         sa.Column("format", sa.String(16), nullable=False),
@@ -102,7 +125,12 @@ def upgrade() -> None:
     op.create_table(
         "dataset_versions",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("dataset_id", sa.String(36), sa.ForeignKey("datasets.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "dataset_id",
+            sa.String(36),
+            sa.ForeignKey("datasets.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("version", sa.String(32), nullable=False),
         sa.Column("schema_json", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("row_count", sa.Integer(), nullable=False),
@@ -121,9 +149,21 @@ def upgrade() -> None:
         "experiments",
         sa.Column("id", sa.String(36), primary_key=True),
         sa.Column("tenant_id", sa.String(36), nullable=False),
-        sa.Column("project_id", sa.String(36), sa.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("dataset_version_id", sa.String(36), sa.ForeignKey("dataset_versions.id"), nullable=False),
-        sa.Column("model_version_id", sa.String(36), sa.ForeignKey("model_versions.id"), nullable=False),
+        sa.Column(
+            "project_id",
+            sa.String(36),
+            sa.ForeignKey("projects.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "dataset_version_id",
+            sa.String(36),
+            sa.ForeignKey("dataset_versions.id"),
+            nullable=False,
+        ),
+        sa.Column(
+            "model_version_id", sa.String(36), sa.ForeignKey("model_versions.id"), nullable=False
+        ),
         sa.Column("spec_json", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("status", sa.String(32), nullable=False, default="CREATED"),
         sa.Column("idempotency_key", sa.String(128), nullable=True),
@@ -134,13 +174,20 @@ def upgrade() -> None:
     op.create_index("ix_experiments_tenant_created", "experiments", ["tenant_id", "created_at"])
     op.create_index("ix_experiments_project_created", "experiments", ["project_id", "created_at"])
     op.create_index("ix_experiments_status_created", "experiments", ["status", "created_at"])
-    op.create_index("ix_experiments_idempotency", "experiments", ["tenant_id", "project_id", "idempotency_key"])
+    op.create_index(
+        "ix_experiments_idempotency", "experiments", ["tenant_id", "project_id", "idempotency_key"]
+    )
 
     # 9. Experiment Runs
     op.create_table(
         "experiment_runs",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("experiment_id", sa.String(36), sa.ForeignKey("experiments.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "experiment_id",
+            sa.String(36),
+            sa.ForeignKey("experiments.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("run_number", sa.Integer(), nullable=False, default=1),
         sa.Column("status", sa.String(32), nullable=False, default="QUEUED"),
         sa.Column("worker_id", sa.String(128), nullable=True),
@@ -156,8 +203,18 @@ def upgrade() -> None:
     op.create_table(
         "metrics",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("experiment_id", sa.String(36), sa.ForeignKey("experiments.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("run_id", sa.String(36), sa.ForeignKey("experiment_runs.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "experiment_id",
+            sa.String(36),
+            sa.ForeignKey("experiments.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "run_id",
+            sa.String(36),
+            sa.ForeignKey("experiment_runs.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("metric_name", sa.String(64), nullable=False),
         sa.Column("metric_value", sa.Float(), nullable=False),
         sa.Column("step", sa.Integer(), nullable=False, default=0),
@@ -171,7 +228,13 @@ def upgrade() -> None:
     op.create_table(
         "analysis_runs",
         sa.Column("id", sa.String(36), primary_key=True),
-        sa.Column("experiment_id", sa.String(36), sa.ForeignKey("experiments.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "experiment_id",
+            sa.String(36),
+            sa.ForeignKey("experiments.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("tenant_id", sa.String(36), nullable=False),
         sa.Column("summary_json", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.Column("diagnostics_json", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
@@ -184,7 +247,12 @@ def upgrade() -> None:
         "artifacts",
         sa.Column("id", sa.String(36), primary_key=True),
         sa.Column("tenant_id", sa.String(36), nullable=False),
-        sa.Column("experiment_id", sa.String(36), sa.ForeignKey("experiments.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "experiment_id",
+            sa.String(36),
+            sa.ForeignKey("experiments.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("artifact_type", sa.String(64), nullable=False),
         sa.Column("storage_uri", sa.String(512), nullable=False),
         sa.Column("size_bytes", sa.BigInteger(), nullable=False),
