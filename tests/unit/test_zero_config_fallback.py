@@ -20,6 +20,7 @@ from ml_mcp.workers.daemon import WorkerDaemon
 
 def test_default_database_url_generation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Verify that absent DATABASE_URL yields an embedded SQLite URL under ~/.quicklab/."""
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     monkeypatch.setenv("QUICKLAB_HOME", str(tmp_path))
     default_url = get_default_database_url()
     assert default_url.startswith("sqlite+aiosqlite:///")
