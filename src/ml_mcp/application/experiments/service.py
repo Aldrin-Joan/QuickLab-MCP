@@ -1,5 +1,6 @@
 """Experiment application service managing lifecycle, validation, idempotency, and outbox publication."""
 
+import logging
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,8 @@ from ml_mcp.infrastructure.postgres.base import generate_uuid7
 from ml_mcp.infrastructure.postgres.models import ExperimentOrm, OutboxEventOrm
 from ml_mcp.infrastructure.postgres.repositories.datasets import DatasetRepository
 from ml_mcp.infrastructure.postgres.repositories.experiments import ExperimentRepository
+
+logger = logging.getLogger(__name__)
 
 
 class ExperimentService:

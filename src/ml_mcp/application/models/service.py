@@ -1,7 +1,9 @@
 """Model catalog application service."""
 
 from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ml_mcp.application.models.catalog_seed import APPROVED_MODELS
 from ml_mcp.domain.errors import (
     ModelNotApprovedError,

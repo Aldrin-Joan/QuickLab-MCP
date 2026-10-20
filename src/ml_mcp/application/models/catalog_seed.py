@@ -13,7 +13,7 @@ from ml_mcp.domain.value_objects import (
 
 def _make_digest(model_id: str) -> str:
     """Generate deterministic SHA-256 container image digest for model family."""
-    return f"sha256:{hashlib.sha256(f'modellab/trainer-{model_id}:1.0.0'.encode('utf-8')).hexdigest()}"
+    return f"sha256:{hashlib.sha256(f'modellab/trainer-{model_id}:1.0.0'.encode()).hexdigest()}"
 
 
 APPROVED_MODELS: list[ModelMetadata] = [

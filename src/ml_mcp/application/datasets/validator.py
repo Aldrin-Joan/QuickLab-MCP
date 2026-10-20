@@ -3,10 +3,9 @@
 import csv
 import io
 import warnings
-from typing import Any
+
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
+
 from ml_mcp.config import Settings, get_settings
 from ml_mcp.domain.errors import DatasetValidationError
 from ml_mcp.domain.value_objects import (

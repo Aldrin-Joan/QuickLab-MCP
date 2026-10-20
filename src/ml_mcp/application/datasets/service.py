@@ -1,13 +1,14 @@
 """Dataset application service managing registration, validation, and inspection."""
 
 import io
-import json
 from typing import Any
+
 import pandas as pd
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from ml_mcp.application.datasets.validator import DatasetValidator
 from ml_mcp.domain.errors import ResourceNotFoundError
-from ml_mcp.domain.value_objects import DatasetFormat, DatasetSchema
+from ml_mcp.domain.value_objects import DatasetFormat
 from ml_mcp.infrastructure.object_storage.s3 import S3StorageService, get_storage_service
 from ml_mcp.infrastructure.postgres.base import generate_uuid7
 from ml_mcp.infrastructure.postgres.models import DatasetOrm, DatasetVersionOrm
