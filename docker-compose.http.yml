@@ -77,6 +77,7 @@ services:
       - "8889:8889"
 
   db-migrate:
+    image: ghcr.io/aldrin-joan/quicklab-api:latest
     build:
       context: .
       target: ml-mcp-api
@@ -90,6 +91,7 @@ services:
     restart: "no"
 
   api:
+    image: ghcr.io/aldrin-joan/quicklab-api:latest
     build:
       context: .
       target: ml-mcp-api
@@ -126,6 +128,7 @@ services:
       retries: 3
 
   worker:
+    image: ghcr.io/aldrin-joan/quicklab-worker:latest
     build:
       context: .
       target: ml-worker-tabular-cpu

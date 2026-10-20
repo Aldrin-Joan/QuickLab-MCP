@@ -251,28 +251,27 @@ ModelLab supports both **STDIO** (local subprocess IPC) and **Streamable HTTP** 
 
 Select your preferred runtime configuration below:
 
-### 1. Docker + STDIO
-Runs ModelLab inside an isolated Docker container with standard I/O (`sys.stdin` / `sys.stdout`) piped directly to the MCP client.
+### 1. Docker + STDIO (Pre-Built Image)
+Runs QuickLab inside an isolated Docker container with standard I/O (`sys.stdin` / `sys.stdout`) piped directly to the MCP client:
 
 ```json
 {
   "mcpServers": {
-    "modellab": {
+    "quicklab": {
       "command": "docker",
       "args": [
         "run",
         "-i",
         "--rm",
         "--entrypoint", "python",
-        "--network", "host",
         "-e", "APP_ENV=production",
-        "-e", "DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/modellab",
-        "-e", "REDIS_URL=redis://localhost:6379/0",
-        "-e", "OBJECT_STORE_ENDPOINT_URL=http://localhost:9000",
+        "-e", "DATABASE_URL=postgresql+asyncpg://postgres:postgres@host.docker.internal:5433/modellab",
+        "-e", "REDIS_URL=redis://host.docker.internal:6379/0",
+        "-e", "OBJECT_STORE_ENDPOINT_URL=http://host.docker.internal:9000",
         "-e", "OBJECT_STORE_ACCESS_KEY_ID=minioadmin",
         "-e", "OBJECT_STORE_SECRET_ACCESS_KEY=minioadmin",
         "-e", "OBJECT_STORE_BUCKET_NAME=modellab-artifacts",
-        "modellab-api",
+        "ghcr.io/aldrin-joan/quicklab-api:latest",
         "-m", "ml_mcp.server.stdio"
       ]
     }
@@ -280,9 +279,22 @@ Runs ModelLab inside an isolated Docker container with standard I/O (`sys.stdin`
 }
 ```
 
-> **Note for Docker Desktop (macOS / Windows)**: If `--network host` is unavailable in your Docker Desktop environment, connect via the shared Docker network:
+> **Note for Docker Networking**: If running local services on your host, `host.docker.internal` allows the container to connect to your host ports seamlessly on macOS, Windows, and Linux. If using Docker Compose, connect via the shared Docker network:
 > ```json
 > "args": [
+>   "run", "-i", "--rm",
+>   "--entrypoint", "python",
+>   "--network", "modellab_default",
+>   "-e", "DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/modellab",
+>   "-e", "REDIS_URL=redis://redis:6379/0",
+>   "-e", "OBJECT_STORE_ENDPOINT_URL=http://minio:9000",
+>   "-e", "OBJECT_STORE_ACCESS_KEY_ID=minioadmin",
+>   "-e", "OBJECT_STORE_SECRET_ACCESS_KEY=minioadmin",
+>   "-e", "OBJECT_STORE_BUCKET_NAME=modellab-artifacts",
+>   "ghcr.io/aldrin-joan/quicklab-api:latest",
+>   "-m", "ml_mcp.server.stdio"
+> ]
+> ```
 >   "run", "-i", "--rm",
 >   "--entrypoint", "python",
 >   "--network", "modellab_default",
