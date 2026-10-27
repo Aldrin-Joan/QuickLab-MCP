@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/quicklab-social-banner.png" alt="QuickLab-MCP — Production Tabular ML Experimentation Control Plane for AI Agents" width="100%">
+</p>
+
 # QuickLab MCP
 
 [![Python Version](https://img.shields.io/badge/python-3.13%2B-blue.svg)](https://www.python.org/downloads/)
